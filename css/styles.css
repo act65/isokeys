@@ -1,0 +1,190 @@
+/* styles.css — dark, neon-tinted UI for Hexboard. */
+:root {
+  --bg: #0b0e17;
+  --bg-2: #121828;
+  --panel: rgba(255, 255, 255, 0.04);
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --text: #e8ecf5;
+  --muted: #8a93a8;
+  --accent: #4dd0ff;
+  --accent-2: #b26bff;
+  --good: #39d98a;
+  --bad: #ff5d6c;
+  --card-bg: rgba(0, 0, 0, 0.25);
+  --radius: 14px;
+  font-size: 16px;
+}
+
+/* ---- Earthy / whimsical theme ---- */
+body[data-theme="earthy"] {
+  --bg: #e7d9bd;
+  --bg-2: #f5edd9;
+  --panel: rgba(90, 70, 45, 0.07);
+  --panel-border: rgba(90, 70, 45, 0.20);
+  --text: #3b2f2a;
+  --muted: #7c6a54;
+  --accent: #c8683c;
+  --accent-2: #8a9a52;
+  --good: #5c8a3c;
+  --bad: #bd4a2c;
+  --card-bg: rgba(255, 255, 255, 0.45);
+  background:
+    radial-gradient(1100px 560px at 12% -10%, rgba(138, 154, 82, 0.38), transparent 60%),
+    radial-gradient(900px 480px at 92% 0%, rgba(200, 104, 60, 0.30), transparent 55%),
+    var(--bg);
+}
+body[data-theme="earthy"] .tab.active,
+body[data-theme="earthy"] .subtab.active,
+body[data-theme="earthy"] .btn.primary { color: #fdf6e6; }
+body[data-theme="earthy"] .logo { filter: drop-shadow(0 0 8px rgba(200, 104, 60, 0.45)); }
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(77, 208, 255, 0.10), transparent 60%),
+    radial-gradient(1000px 500px at 90% 0%, rgba(178, 107, 255, 0.10), transparent 55%),
+    var(--bg);
+  min-height: 100vh;
+}
+
+.app { max-width: 1180px; margin: 0 auto; padding: 20px; }
+
+/* ---- topbar ---- */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 20px; flex-wrap: wrap; margin-bottom: 18px;
+}
+.brand { display: flex; align-items: center; gap: 14px; }
+.logo {
+  font-size: 40px; line-height: 1;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 10px rgba(77, 208, 255, 0.5));
+}
+.brand h1 { margin: 0; font-size: 26px; letter-spacing: 0.5px; }
+.tagline { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+
+.mode-tabs { display: flex; gap: 8px; background: var(--panel); padding: 5px; border-radius: 12px; border: 1px solid var(--panel-border); }
+.tab {
+  border: none; background: transparent; color: var(--muted);
+  padding: 9px 16px; border-radius: 9px; cursor: pointer; font-size: 14px; font-weight: 600;
+  transition: all 0.15s ease;
+}
+.tab:hover { color: var(--text); }
+.tab.active { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #08111c; }
+
+/* ---- panels ---- */
+.panel {
+  background: var(--panel); border: 1px solid var(--panel-border);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 16px;
+  backdrop-filter: blur(6px);
+}
+.hidden { display: none; }
+
+.controls { display: flex; gap: 22px; align-items: flex-end; flex-wrap: wrap; }
+.control-group { display: flex; flex-direction: column; gap: 6px; }
+.control-group label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+.control-group .hint { color: var(--accent); font-weight: 700; }
+.control-group.checkbox label { text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--text); }
+
+select, input[type="number"] {
+  background: var(--bg-2); color: var(--text);
+  border: 1px solid var(--panel-border); border-radius: 8px;
+  padding: 8px 10px; font-size: 14px; outline: none;
+}
+select:focus, input:focus { border-color: var(--accent); }
+input[type="number"] { width: 62px; }
+
+.stepper { display: flex; align-items: center; gap: 8px; }
+.iv { font-size: 12px; color: var(--accent); min-width: 90px; }
+
+input[type="range"] { accent-color: var(--accent); width: 130px; }
+
+.interval-readout {
+  margin-left: auto; align-self: center; text-align: right;
+  font-size: 12.5px; color: var(--muted); line-height: 1.7; min-width: 190px;
+}
+.interval-readout b { color: var(--text); }
+
+/* ---- mode panels ---- */
+.tip { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+.tip b { color: var(--accent); }
+
+.game-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.btn {
+  border: 1px solid var(--panel-border); background: var(--bg-2); color: var(--text);
+  padding: 9px 16px; border-radius: 9px; cursor: pointer; font-size: 14px; font-weight: 600;
+  transition: all 0.15s ease;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #08111c; border: none; }
+.btn.primary:hover { filter: brightness(1.1); }
+.inline-check { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+
+.scoreboard { margin-left: auto; display: flex; gap: 18px; font-size: 13px; }
+.scoreboard .stat { display: flex; flex-direction: column; align-items: center; }
+.scoreboard .stat b { font-size: 20px; color: var(--accent); font-variant-numeric: tabular-nums; }
+.scoreboard .stat span { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+#rhythm-canvas { width: 100%; display: block; border-radius: 10px; background: var(--card-bg); }
+.feedback { text-align: center; font-size: 22px; font-weight: 800; height: 30px; margin-top: 8px; letter-spacing: 1px; }
+
+.prompt-card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 26px; border-radius: 12px; background: var(--card-bg);
+  transition: box-shadow 0.2s ease, background 0.2s ease;
+}
+.prompt-card.correct { background: rgba(57, 217, 138, 0.12); box-shadow: 0 0 30px rgba(57, 217, 138, 0.35); }
+.prompt-card.wrong { background: rgba(255, 93, 108, 0.10); }
+.prompt-main { font-size: 34px; font-weight: 800; letter-spacing: 0.5px; }
+.prompt-sub { font-size: 15px; color: var(--muted); }
+
+/* ---- tutorial ---- */
+.subtabs { display: flex; gap: 6px; margin-bottom: 14px; }
+.subtab {
+  border: 1px solid var(--panel-border); background: var(--bg-2); color: var(--muted);
+  padding: 7px 15px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;
+}
+.subtab.active { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; border: none; }
+
+.neighbour-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
+.nb-item {
+  display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 82px;
+  padding: 10px 14px; border-radius: 10px; background: var(--card-bg); border: 1px solid var(--panel-border);
+}
+.nb-item .nb-arrow { font-size: 22px; color: var(--muted); line-height: 1; }
+.nb-item b { font-size: 20px; font-variant-numeric: tabular-nums; }
+.nb-item.up b { color: #d98a2b; }
+.nb-item.down b { color: #4a90c2; }
+.nb-item em { font-size: 11px; color: var(--muted); font-style: normal; }
+
+.tutorial-body { display: flex; flex-direction: column; gap: 12px; }
+.tut-notes { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.tut-note {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: var(--card-bg); border: 1px solid var(--panel-border);
+  border-radius: 10px; padding: 10px 16px; min-width: 60px;
+}
+.tut-note b { font-size: 20px; color: var(--accent); }
+.tut-note span { font-size: 15px; font-weight: 600; }
+.tut-note em { font-size: 11px; color: var(--muted); font-style: normal; text-transform: uppercase; letter-spacing: 0.5px; }
+.tut-arrow { color: var(--muted); font-size: 18px; font-weight: 700; padding: 0 2px; }
+.tut-desc { margin: 0; font-size: 15px; color: var(--text); font-weight: 600; }
+.game-bar .control-group { gap: 4px; }
+.game-bar .control-group label { font-size: 11px; }
+
+/* ---- keyboard ---- */
+.keyboard-wrap { display: flex; justify-content: center; overflow-x: auto; padding: 10px 0; }
+#kbd-canvas { display: block; }
+
+footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 18px; }
+
+@media (max-width: 720px) {
+  .controls { gap: 14px; }
+  .interval-readout { margin-left: 0; text-align: left; }
+  .mode-tabs { width: 100%; }
+}
