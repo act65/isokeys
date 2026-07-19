@@ -7,6 +7,15 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
+  <div id="loading" class="loading">
+    <div class="loading-inner">
+      <div class="loading-logo">⬡</div>
+      <div class="loading-title">Hexboard</div>
+      <div class="loading-sub">Loading grand piano…</div>
+      <div class="loading-bar"><div class="loading-fill" id="loading-fill"></div></div>
+    </div>
+  </div>
+
   <div class="app">
     <header class="topbar">
       <div class="brand">
@@ -103,6 +112,7 @@
         <div class="subtabs">
           <button class="subtab active" data-view="neighbours">Neighbours</button>
           <button class="subtab" data-view="chords">Chord shapes</button>
+          <button class="subtab" data-view="circle">Circle of 5ths</button>
         </div>
 
         <div id="tut-neighbours">
@@ -124,11 +134,36 @@
             <p class="tip">The highlighted hexagons are the chord's <b>shape</b> — slide that exact shape anywhere and it's the same chord in a new key.</p>
           </div>
         </div>
+
+        <div id="tut-circle" class="hidden">
+          <div class="game-bar">
+            <div class="control-group"><label>Root</label><select id="circle-root"></select></div>
+            <div class="control-group"><label>Scale</label><select id="circle-scale"></select></div>
+          </div>
+          <div class="circle-body">
+            <canvas id="circle-canvas"></canvas>
+            <div class="circle-text">
+              <p class="tip">Each step clockwise is a <b>perfect fifth</b> — the interval that drives most chord progressions. Neighbours here sound closely related; opposite sides clash.</p>
+              <p class="tip">A <b>scale is a contiguous arc</b>: pick major/minor and watch 7 adjacent notes light up. Pentatonics are a shorter arc; whole-tone / diminished break into a pattern. The same notes glow on the keyboard. Click a note to hear it and re-centre.</p>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="panel mode-panel hidden" id="panel-rhythm">
         <div class="game-bar">
           <select id="song-select"></select>
+          <div class="control-group">
+            <label>Speed</label>
+            <select id="rhythm-speed">
+              <option value="0.6">0.6× · Relaxed</option>
+              <option value="0.8">0.8× · Easy</option>
+              <option value="1" selected>1× · Normal</option>
+              <option value="1.25">1.25× · Hard</option>
+              <option value="1.5">1.5× · Very hard</option>
+              <option value="2">2× · Expert</option>
+            </select>
+          </div>
           <button id="rhythm-start" class="btn primary">▶ Play</button>
           <button id="rhythm-stop" class="btn">■ Stop</button>
           <div class="scoreboard" id="rhythm-score"></div>
@@ -151,6 +186,22 @@
           <button id="reaction-replay" class="btn hidden">🔊 Replay</button>
           <label class="inline-check"><input type="checkbox" id="reaction-hints" checked /> Show target keys</label>
           <div class="scoreboard" id="reaction-score"></div>
+        </div>
+        <div class="reaction-options">
+          <div class="opt-group">
+            <span class="opt-label">Chords</span>
+            <div id="reaction-chord-types" class="chip-row"></div>
+          </div>
+          <div class="opt-group">
+            <span class="opt-label">Inversion</span>
+            <select id="reaction-inv">
+              <option value="all">Any</option>
+              <option value="0">Root position</option>
+              <option value="1">1st inversion</option>
+              <option value="2">2nd inversion</option>
+              <option value="3">3rd inversion (7ths)</option>
+            </select>
+          </div>
         </div>
         <div class="prompt-card" id="reaction-prompt-card">
           <div class="prompt-main" id="reaction-prompt">Press Start</div>
@@ -175,6 +226,7 @@
   <script src="js/songs.js"></script>
   <script src="js/games.js"></script>
   <script src="js/tutorial.js"></script>
+  <script src="js/circle.js"></script>
   <script src="js/main.js"></script>
   <!-- recorded piano samples (~2.7 MB base64) — loaded last so the app is
        interactive immediately; the audio engine polls for it in the background -->

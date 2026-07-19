@@ -91,6 +91,7 @@
   $('theme-select').addEventListener('change', (e) => {
     document.body.dataset.theme = e.target.value;
     kbd.setTheme(e.target.value);
+    circle.setTheme(e.target.value);
   });
   $('color-scheme').addEventListener('change', (e) => {
     const v = e.target.value;
@@ -119,6 +120,11 @@
       `↗ ${intervalName(ur)}<br>` +
       `↖ ${intervalName(ur - r)}`;
     stopGames();
+    // keep the tutorial highlight in sync when the layout changes underneath it
+    if (!$('panel-tutorial').classList.contains('hidden')) {
+      const activeBtn = document.querySelector('.subtab.active');
+      if (activeBtn) selectSubtab(activeBtn.dataset.view);
+    }
   }
 
   presetSel.addEventListener('change', () => {
@@ -153,7 +159,11 @@
       const mode = tab.dataset.mode;
       Object.entries(panels).forEach(([m, el]) => el.classList.toggle('hidden', m !== mode));
       stopGames();
-      if (mode === 'tutorial') { refreshInvOptions(); tutorial.enter(); }
+      if (mode === 'tutorial') {
+        refreshInvOptions();
+        const activeBtn = document.querySelector('.subtab.active');
+        selectSubtab(activeBtn ? activeBtn.dataset.view : 'neighbours');
+      }
     });
   });
 
@@ -165,17 +175,55 @@
     $('rhythm-feedback').textContent = '';
   }
 
-  // ---- tutorial controls ----
-  document.querySelectorAll('.subtab').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.subtab').forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
-      const view = btn.dataset.view;
-      $('tut-neighbours').classList.toggle('hidden', view !== 'neighbours');
-      $('tut-chords').classList.toggle('hidden', view !== 'chords');
-      tutorial.setView(view);
-    });
+  // ---- circle of fifths ----
+  fillNoteNames($('circle-root'));
+  Object.keys(T.SCALES).forEach((key) => {
+    const opt = document.createElement('option');
+    opt.value = key; opt.textContent = T.SCALE_LABELS[key] || key;
+    $('circle-scale').appendChild(opt);
   });
+  let circleRoot = 0, circleScale = 'major';
+  const circle = new KB.CircleOfFifths($('circle-canvas'), (pc) => {
+    circleRoot = pc;
+    $('circle-root').value = String(pc);
+    KB.audio.blip(60 + pc, 0.7);
+    updateCircle();
+  });
+  function updateCircle() {
+    circle.setTheme(document.body.dataset.theme);
+    circle.setSelection(circleRoot, circleScale);
+    const set = T.SCALES[circleScale] || T.SCALES.major;
+    const hl = new Map();
+    kbd.cells.forEach((c) => {
+      const n = kbd.noteFor(c.key);
+      if (n < 0 || n > 127) return;
+      const pc = ((n % 12) + 12) % 12;
+      const deg = set.indexOf((((pc - circleRoot) % 12) + 12) % 12);
+      if (deg === -1) return;
+      const frac = set.length > 1 ? deg / (set.length - 1) : 0;
+      const col = KB.viridis(0.1 + frac * 0.85);
+      hl.set(c.key, {
+        color: `rgb(${col[0] | 0}, ${col[1] | 0}, ${col[2] | 0})`,
+        ring: pc === circleRoot ? '#ffffff' : 'rgba(255,255,255,0.5)',
+      });
+    });
+    kbd.setHighlights(hl);
+  }
+  $('circle-root').addEventListener('change', (e) => { circleRoot = parseInt(e.target.value, 10); updateCircle(); });
+  $('circle-scale').addEventListener('change', (e) => { circleScale = e.target.value; updateCircle(); });
+
+  // ---- tutorial sub-view routing ----
+  function selectSubtab(view) {
+    document.querySelectorAll('.subtab').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
+    $('tut-neighbours').classList.toggle('hidden', view !== 'neighbours');
+    $('tut-chords').classList.toggle('hidden', view !== 'chords');
+    $('tut-circle').classList.toggle('hidden', view !== 'circle');
+    if (view === 'circle') { tutorial.active = false; updateCircle(); }
+    else { tutorial.active = true; tutorial.setView(view); }
+  }
+  document.querySelectorAll('.subtab').forEach((btn) => btn.addEventListener('click', () => selectSubtab(btn.dataset.view)));
+
+  // ---- tutorial controls ----
   $('tut-root').addEventListener('change', (e) => tutorial.setRoot(parseInt(e.target.value, 10)));
   $('tut-type').addEventListener('change', (e) => { tutorial.setType(e.target.value); refreshInvOptions(); $('tut-inv').value = '0'; });
   $('tut-inv').addEventListener('change', (e) => tutorial.setInversion(parseInt(e.target.value, 10)));
@@ -206,8 +254,10 @@
   function keyCap(k) { return k === '—' ? '—' : (T.keyLabel(k)); }
 
   // ---- rhythm game ----
+  $('rhythm-speed').addEventListener('change', (e) => rhythm.setSpeed(parseFloat(e.target.value)));
   $('rhythm-start').addEventListener('click', () => {
     KB.audio.ensure();
+    rhythm.setSpeed(parseFloat($('rhythm-speed').value));
     rhythm.start(KB.songs.SONGS[parseInt(songSel.value || '0', 10)]);
   });
   $('rhythm-stop').addEventListener('click', () => { rhythm.stop(); $('rhythm-feedback').textContent = ''; });
@@ -238,6 +288,8 @@
   $('reaction-start').addEventListener('click', () => {
     KB.audio.ensure();
     reaction.setMode($('reaction-mode').value);
+    reaction.setTypes(readChordTypes());
+    reaction.setInversionMode($('reaction-inv').value);
     reaction.start();
     updateReplayVisibility();
   });
@@ -249,6 +301,25 @@
   });
   $('reaction-replay').addEventListener('click', () => reaction.replay());
   $('reaction-hints').addEventListener('change', (e) => reaction.setHints(e.target.checked));
+
+  // chord-quality chips + inversion filter
+  const chordChips = $('reaction-chord-types');
+  KB.REACTION_CHORD_POOL.forEach((key) => {
+    const label = document.createElement('label');
+    label.className = 'chip';
+    label.innerHTML = `<input type="checkbox" value="${key}" checked /> ${T.CHORD_TYPES[key].label}`;
+    chordChips.appendChild(label);
+  });
+  const readChordTypes = () => Array.from(chordChips.querySelectorAll('input:checked')).map((c) => c.value);
+  chordChips.addEventListener('change', () => {
+    let types = readChordTypes();
+    if (!types.length) { // never allow an empty set
+      chordChips.querySelectorAll('input').forEach((c) => (c.checked = true));
+      types = readChordTypes();
+    }
+    reaction.setTypes(types);
+  });
+  $('reaction-inv').addEventListener('change', (e) => reaction.setInversionMode(e.target.value));
 
   function renderReactionState(st) {
     if (st.prompt !== undefined && st.prompt !== '') {
@@ -282,12 +353,31 @@
   renderRhythmScore({ score: 0, combo: 0, perfect: 0, great: 0, good: 0, miss: 0 });
   renderReactionState({ round: 0, best: null, avg: null, wrong: 0 });
 
-  // deep-link to a mode via #hash (e.g. index.html#tutorial)
-  const hashMode = (location.hash || '').replace('#', '');
-  if (['tutorial', 'rhythm', 'reaction', 'free'].indexOf(hashMode) !== -1) {
-    const tab = document.querySelector(`.tab[data-mode="${hashMode}"]`);
+  // deep-link to a mode or tutorial sub-view via #hash (e.g. #reaction, #circle)
+  const hash = (location.hash || '').replace('#', '');
+  if (['tutorial', 'rhythm', 'reaction', 'free'].indexOf(hash) !== -1) {
+    const tab = document.querySelector(`.tab[data-mode="${hash}"]`);
     if (tab) tab.click();
+  } else if (['neighbours', 'chords', 'circle'].indexOf(hash) !== -1) {
+    const tab = document.querySelector('.tab[data-mode="tutorial"]');
+    if (tab) tab.click();
+    selectSubtab(hash);
   }
+
+  // ---- loading screen: start decoding samples up front, show progress ----
+  KB.audio.ensure(); // creates a (suspended) AudioContext and begins decoding
+  (function pollLoading(tries) {
+    tries = tries || 0;
+    const fill = $('loading-fill');
+    if (fill) fill.style.width = Math.round(KB.audio.progress * 100) + '%';
+    // hide when ready, or give up after ~30s so the app is never stuck
+    if (KB.audio.samplesReady || tries > 300) {
+      const el = $('loading');
+      if (el) { el.classList.add('done'); setTimeout(() => { el.style.display = 'none'; }, 500); }
+      return;
+    }
+    setTimeout(() => pollLoading(tries + 1), 100);
+  })();
 
   // resume audio on first interaction anywhere
   window.addEventListener('pointerdown', () => KB.audio.ensure(), { once: true });

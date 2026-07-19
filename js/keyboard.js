@@ -16,6 +16,20 @@
     return `hsl(${hue}, ${sat}%, ${light}%)`;
   }
 
+  // Viridis: a perceptually-uniform, colourblind-safe sequential ramp. Used to
+  // colour scale degrees so the ascending order of a scale is actually readable.
+  const VIRIDIS = [
+    [68, 1, 84], [72, 40, 120], [62, 73, 137], [49, 104, 142], [38, 130, 142],
+    [31, 158, 137], [53, 183, 121], [110, 206, 88], [181, 222, 43], [253, 231, 37],
+  ];
+  function viridis(t) {
+    t = Math.max(0, Math.min(1, t));
+    const x = t * (VIRIDIS.length - 1);
+    const i = Math.floor(x), f = x - i;
+    const a = VIRIDIS[i], b = VIRIDIS[Math.min(i + 1, VIRIDIS.length - 1)];
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+  }
+
   class HexKeyboard {
     constructor(canvas, layout) {
       this.canvas = canvas;
@@ -83,9 +97,13 @@
         }
         case 'scale': {
           const set = T.SCALES[this.scaleType] || T.SCALES.major;
-          const inScale = set.indexOf((((pc - this.scaleRoot) % 12) + 12) % 12) !== -1;
-          if (!inScale) return active ? `hsl(${hue}, 35%, ${light}%)` : p.out;
-          return `hsl(${hue}, ${sat}%, ${light}%)`;
+          const deg = set.indexOf((((pc - this.scaleRoot) % 12) + 12) % 12);
+          if (deg === -1) return active ? `hsl(${hue}, 22%, ${p.idleLight}%)` : p.out; // out of scale: faded
+          // colour by scale degree along the perceptual ramp (root..top = purple..yellow)
+          const frac = set.length > 1 ? deg / (set.length - 1) : 0;
+          let [r, g, b] = viridis(0.1 + frac * 0.85);
+          if (active) { r += (255 - r) * 0.4; g += (255 - g) * 0.4; b += (255 - b) * 0.4; }
+          return `rgb(${r | 0}, ${g | 0}, ${b | 0})`;
         }
         case 'rainbow':
         default:
@@ -284,22 +302,34 @@
 
       if (!inRange) return;
 
-      // labels — dark text on the light "earthy" theme, light text on neon
-      ctx.fillStyle = isActive ? pal.textActive : pal.text;
+      // labels — default to theme ink, but on strongly-coloured fills (viridis
+      // scale colours) pick black/white by luminance so text stays legible.
+      let labelMain = isActive ? pal.textActive : pal.text;
+      let labelSub = isActive ? pal.textActive : pal.textDim;
+      if (typeof fill === 'string' && fill.charAt(0) === 'r') {
+        const n = fill.match(/\d+/g);
+        if (n) {
+          const L = 0.299 * +n[0] + 0.587 * +n[1] + 0.114 * +n[2];
+          labelMain = L > 140 ? '#171717' : '#ffffff';
+          labelSub = L > 140 ? 'rgba(0,0,0,0.62)' : 'rgba(255,255,255,0.72)';
+        }
+      }
+
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
+      ctx.fillStyle = labelMain;
       ctx.font = `bold ${Math.round(this.hexSize * 0.42)}px "Segoe UI", system-ui, sans-serif`;
       ctx.fillText(T.keyLabel(c.key), c.cx, c.cy - this.hexSize * 0.18);
 
       if (this.showNoteNames) {
-        ctx.fillStyle = isActive ? pal.textActive : pal.textDim;
+        ctx.fillStyle = labelSub;
         ctx.font = `${Math.round(this.hexSize * 0.30)}px "Segoe UI", system-ui, sans-serif`;
         ctx.fillText(T.noteName(midi), c.cx, c.cy + this.hexSize * 0.28);
       }
 
       // chord-role badge (tutorial mode) near the top of the hex
       if (hl && hl.badge) {
-        ctx.fillStyle = pal.textActive;
+        ctx.fillStyle = labelMain;
         ctx.font = `bold ${Math.round(this.hexSize * 0.28)}px system-ui, sans-serif`;
         ctx.fillText(hl.badge, c.cx, c.cy - this.hexSize * 0.52);
       }
@@ -308,4 +338,5 @@
 
   KB.HexKeyboard = HexKeyboard;
   KB.pcColor = pcColor;
+  KB.viridis = viridis;
 })(window.KB = window.KB || {});

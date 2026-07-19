@@ -53,6 +53,27 @@ body {
 
 .app { max-width: 1180px; margin: 0 auto; padding: 20px; }
 
+/* ---- loading screen ---- */
+.loading {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+  transition: opacity 0.45s ease;
+}
+.loading.done { opacity: 0; pointer-events: none; }
+.loading-inner { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.loading-logo {
+  font-size: 64px; line-height: 1;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 0.55; transform: scale(0.96); } 50% { opacity: 1; transform: scale(1.04); } }
+.loading-title { font-size: 26px; font-weight: 800; letter-spacing: 0.5px; }
+.loading-sub { font-size: 13px; color: var(--muted); }
+.loading-bar { width: 220px; height: 6px; border-radius: 3px; background: var(--panel); overflow: hidden; margin-top: 6px; }
+.loading-fill { height: 100%; width: 0; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width 0.2s ease; }
+
 /* ---- topbar ---- */
 .topbar {
   display: flex; align-items: center; justify-content: space-between;
@@ -176,6 +197,19 @@ input[type="range"] { accent-color: var(--accent); width: 130px; }
 .tut-desc { margin: 0; font-size: 15px; color: var(--text); font-weight: 600; }
 .game-bar .control-group { gap: 4px; }
 .game-bar .control-group label { font-size: 11px; }
+
+/* reaction options */
+.reaction-options { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--panel-border); }
+.opt-group { display: flex; align-items: center; gap: 10px; }
+.opt-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); }
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; padding: 5px 11px; border-radius: 20px; background: var(--bg-2); border: 1px solid var(--panel-border); cursor: pointer; user-select: none; }
+.chip input { margin: 0; accent-color: var(--accent); }
+
+/* circle of fifths */
+.circle-body { display: flex; gap: 26px; align-items: center; flex-wrap: wrap; }
+#circle-canvas { flex: none; cursor: pointer; }
+.circle-text { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 10px; }
 
 /* ---- keyboard ---- */
 .keyboard-wrap { display: flex; justify-content: center; overflow-x: auto; padding: 10px 0; }

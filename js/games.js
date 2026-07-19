@@ -37,16 +37,22 @@
       this.pxPerMs = 0.20;
       this.hitX = 130;
       this.leadInMs = 2200;
+      this.speed = 1; // playback speed / difficulty multiplier (>1 = faster)
       this.kb.onPress((ev) => this._onPress(ev));
     }
+
+    // Speed multiplier: compresses note timing so the song plays faster. Notes
+    // scroll proportionally faster too, so spacing looks the same but you get
+    // less real time to react — i.e. harder.
+    setSpeed(s) { this.speed = s > 0 ? s : 1; }
 
     start(song) {
       const sched = KB.songs.schedule(song);
       this.notes = sched.notes.map((n) => {
         const t = bestKeyForNote(this.kb, n.midi);
-        return { start: n.start, midi: t ? t.note : n.midi, key: t ? t.key : null, judged: false, result: null };
+        return { start: n.start / this.speed, midi: t ? t.note : n.midi, key: t ? t.key : null, judged: false, result: null };
       });
-      this.totalMs = sched.totalMs;
+      this.totalMs = sched.totalMs / this.speed;
       this.songName = song.name;
       this.startTime = performance.now() + this.leadInMs;
       this.state = { score: 0, combo: 0, maxCombo: 0, perfect: 0, great: 0, good: 0, miss: 0, feedback: '', done: false };
@@ -138,8 +144,9 @@
       for (const n of this.notes) {
         if (n.judged || !n.key) continue;
         const dt = n.start - el;
-        if (dt >= -100 && dt < 700) {
-          const urgency = Math.max(0, 1 - dt / 700);
+        const win = 700 / this.speed;
+        if (dt >= -100 && dt < win) {
+          const urgency = Math.max(0, 1 - dt / win);
           hl.set(n.key, {
             color: KB.pcColor(n.midi, 22 + urgency * 18, 45),
             ring: KB.pcColor(n.midi, 65, 90),
@@ -168,7 +175,7 @@
       const noteH = 46;
       const midY = h / 2;
       for (const n of this.notes) {
-        const x = this.hitX + (n.start - el) * this.pxPerMs;
+        const x = this.hitX + (n.start - el) * this.pxPerMs * this.speed;
         if (x < -60 || x > w + 60) continue;
         const played = n.judged;
         const col = KB.pcColor(n.midi, played ? 30 : 55, played ? 40 : 85);
@@ -212,11 +219,15 @@
       this.active = false;
       this.showHints = true;
       this.mode = 'visual'; // 'visual' = read the name | 'audio' = hear it (ear training)
+      this.allowedTypes = CHORD_POOL.slice(); // which chord qualities can appear
+      this.invMode = 'all';                   // 'all' | '0' | '1' | '2' | '3'
       this.stats = { round: 0, best: null, times: [], wrong: 0 };
       this.kb.onPress((ev) => this._onPress(ev));
     }
 
     setMode(m) { this.mode = m; }
+    setTypes(arr) { this.allowedTypes = (arr && arr.length) ? arr.slice() : CHORD_POOL.slice(); }
+    setInversionMode(m) { this.invMode = m; }
 
     // Arpeggiate the target chord so its inversion (bass note first) is audible.
     _playTarget() {
@@ -262,15 +273,20 @@
       if (!this.active) return;
       const { min, max } = this._rootRange();
       const root = min + Math.floor(Math.random() * Math.max(1, max - min));
-      const type = this._pick(CHORD_POOL);
+      const type = this._pick(this.allowedTypes.length ? this.allowedTypes : CHORD_POOL);
       const chord = T.CHORD_TYPES[type];
-      const inv = Math.floor(Math.random() * chord.intervals.length);
+      // choose inversion, honouring the selected filter (fall back if not valid for this chord)
+      let invChoices;
+      if (this.invMode === 'all') invChoices = chord.intervals.map((_, i) => i);
+      else { const m = parseInt(this.invMode, 10); invChoices = m < chord.intervals.length ? [m] : chord.intervals.map((_, i) => i); }
+      const inv = this._pick(invChoices);
       const midis = T.buildChord(root, type, inv);
       const targets = midis.map((m) => bestKeyForNote(this.kb, m)).filter(Boolean);
 
       this.target = {
         keys: new Set(targets.map((t) => t.key)),
         midis: targets.map((t) => t.note),
+        pcs: new Set(midis.map((m) => ((m % 12) + 12) % 12)), // chord as pitch classes
         label: `${T.pitchClassName(root)} ${chord.label}`,
         inv: T.INVERSION_NAMES[inv],
         notes: targets.map((t) => T.noteName(t.note)).join(' · '),
@@ -307,13 +323,16 @@
 
     _onPress(ev) {
       if (!this.active || !this.target) return;
-      if (!this.target.keys.has(ev.key)) {
+      const pc = ((ev.midi % 12) + 12) % 12;
+      if (!this.target.pcs.has(pc)) { // a note that isn't in the chord at all
         this.stats.wrong++;
         this.onState({ ...this._summary(), flash: 'wrong' });
         return;
       }
-      // success once every required key is currently held down
-      const allHeld = [...this.target.keys].every((k) => this.kb.active.has(k));
+      // success when the pitch classes currently held match the chord — ANY
+      // octave / position / voicing / inversion of the same chord counts.
+      const held = new Set([...this.kb.active].map((k) => ((this.kb.noteFor(k) % 12) + 12) % 12));
+      const allHeld = held.size === this.target.pcs.size && [...this.target.pcs].every((p) => held.has(p));
       if (allHeld) {
         const dt = performance.now() - this.promptStart;
         this.stats.times.push(dt);
@@ -342,5 +361,6 @@
 
   KB.RhythmGame = RhythmGame;
   KB.ReactionGame = ReactionGame;
+  KB.REACTION_CHORD_POOL = CHORD_POOL;
   KB.bestKeyForNote = bestKeyForNote;
 })(window.KB = window.KB || {});
