@@ -69,7 +69,7 @@
   // MIDI note for the bottom-left key; the octave control shifts it at runtime.
   const LAYOUT_PRESETS = {
     'Wicki-Hayden':   { right: 2, upRight: 7, base: 41 }, // whole-tone / fifth
-    'Harmonic Table': { right: 4, upRight: 7, base: 36 }, // major-3rd / fifth (min-3rd up-left)
+    'Tonnetz (Harmonic Table)': { right: 4, upRight: 7, base: 36 }, // major-3rd / fifth / minor-3rd — the Tonnetz
     'Gerhard':        { right: 3, upRight: 7, base: 36 }, // minor-3rd / fifth
     'Fourths (bass)': { right: 5, upRight: 1, base: 33 }, // guitar/bass-like
     'Janko / Chromatic': { right: 2, upRight: 1, base: 43 }, // semitone climb
