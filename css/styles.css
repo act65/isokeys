@@ -34,7 +34,6 @@ body[data-theme="earthy"] {
     var(--bg);
 }
 body[data-theme="earthy"] .tab.active,
-body[data-theme="earthy"] .subtab.active,
 body[data-theme="earthy"] .btn.primary { color: #fdf6e6; }
 body[data-theme="earthy"] .logo { filter: drop-shadow(0 0 8px rgba(200, 104, 60, 0.45)); }
 
@@ -164,37 +163,7 @@ input[type="range"] { accent-color: var(--accent); width: 130px; }
 .prompt-main { font-size: 34px; font-weight: 800; letter-spacing: 0.5px; }
 .prompt-sub { font-size: 15px; color: var(--muted); }
 
-/* ---- tutorial ---- */
-.subtabs { display: flex; gap: 6px; margin-bottom: 14px; }
-.subtab {
-  border: 1px solid var(--panel-border); background: var(--bg-2); color: var(--muted);
-  padding: 7px 15px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;
-}
-.subtab.active { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; border: none; }
-
-.neighbour-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
-.nb-item {
-  display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 82px;
-  padding: 10px 14px; border-radius: 10px; background: var(--card-bg); border: 1px solid var(--panel-border);
-}
-.nb-item .nb-arrow { font-size: 22px; color: var(--muted); line-height: 1; }
-.nb-item b { font-size: 20px; font-variant-numeric: tabular-nums; }
-.nb-item.up b { color: #d98a2b; }
-.nb-item.down b { color: #4a90c2; }
-.nb-item em { font-size: 11px; color: var(--muted); font-style: normal; }
-
-.tutorial-body { display: flex; flex-direction: column; gap: 12px; }
-.tut-notes { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-.tut-note {
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-  background: var(--card-bg); border: 1px solid var(--panel-border);
-  border-radius: 10px; padding: 10px 16px; min-width: 60px;
-}
-.tut-note b { font-size: 20px; color: var(--accent); }
-.tut-note span { font-size: 15px; font-weight: 600; }
-.tut-note em { font-size: 11px; color: var(--muted); font-style: normal; text-transform: uppercase; letter-spacing: 0.5px; }
-.tut-arrow { color: var(--muted); font-size: 18px; font-weight: 700; padding: 0 2px; }
-.tut-desc { margin: 0; font-size: 15px; color: var(--text); font-weight: 600; }
+/* ---- game-bar inline controls ---- */
 .game-bar .control-group { gap: 4px; }
 .game-bar .control-group label { font-size: 11px; }
 
@@ -205,11 +174,6 @@ input[type="range"] { accent-color: var(--accent); width: 130px; }
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; padding: 5px 11px; border-radius: 20px; background: var(--bg-2); border: 1px solid var(--panel-border); cursor: pointer; user-select: none; }
 .chip input { margin: 0; accent-color: var(--accent); }
-
-/* circle of fifths */
-.circle-body { display: flex; gap: 26px; align-items: center; flex-wrap: wrap; }
-#circle-canvas { flex: none; cursor: pointer; }
-.circle-text { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 10px; }
 
 /* ---- keyboard ---- */
 .keyboard-wrap { display: flex; justify-content: center; overflow-x: auto; padding: 10px 0; }

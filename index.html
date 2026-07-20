@@ -27,7 +27,6 @@
       </div>
       <div class="mode-tabs">
         <button class="tab active" data-mode="free">Free Play</button>
-        <button class="tab" data-mode="tutorial">Chords</button>
         <button class="tab" data-mode="rhythm">Rhythm Game</button>
         <button class="tab" data-mode="reaction">Reaction Game</button>
       </div>
@@ -108,48 +107,6 @@
         <p class="tip">Play with your computer keyboard (rows <b>1</b>–<b>0</b>, <b>Q</b>–<b>P</b>, <b>A</b>–<b>;</b>, <b>Z</b>–<b>/</b>) or click the hexes. Every chord shape is the same anywhere on the grid — that's the isomorphic magic.</p>
       </section>
 
-      <section class="panel mode-panel hidden" id="panel-tutorial">
-        <div class="subtabs">
-          <button class="subtab active" data-view="neighbours">Neighbours</button>
-          <button class="subtab" data-view="chords">Chord shapes</button>
-          <button class="subtab" data-view="circle">Circle of 5ths</button>
-        </div>
-
-        <div id="tut-neighbours">
-          <p class="tip">Every key has <b>6 neighbours</b>. On an isomorphic layout the step to each one is the same everywhere on the grid — change the <b>layout</b> or the <b>step sizes</b> above and watch these intervals change. (Centre key: <b id="tut-center">—</b>.)</p>
-          <div class="neighbour-grid" id="tut-neighbour-list"></div>
-          <button id="tut-play-n" class="btn">♪ Hear centre note</button>
-        </div>
-
-        <div id="tut-chords" class="hidden">
-          <div class="game-bar">
-            <div class="control-group"><label>Root</label><select id="tut-root"></select></div>
-            <div class="control-group"><label>Chord</label><select id="tut-type"></select></div>
-            <div class="control-group"><label>Inversion</label><select id="tut-inv"></select></div>
-            <button id="tut-play" class="btn primary">♪ Hear it</button>
-          </div>
-          <div class="tutorial-body">
-            <div class="tut-notes" id="tut-notes"></div>
-            <p class="tut-desc" id="tut-desc"></p>
-            <p class="tip">The highlighted hexagons are the chord's <b>shape</b> — slide that exact shape anywhere and it's the same chord in a new key.</p>
-          </div>
-        </div>
-
-        <div id="tut-circle" class="hidden">
-          <div class="game-bar">
-            <div class="control-group"><label>Root</label><select id="circle-root"></select></div>
-            <div class="control-group"><label>Scale</label><select id="circle-scale"></select></div>
-          </div>
-          <div class="circle-body">
-            <canvas id="circle-canvas"></canvas>
-            <div class="circle-text">
-              <p class="tip">Each step clockwise is a <b>perfect fifth</b> — the interval that drives most chord progressions. Neighbours here sound closely related; opposite sides clash.</p>
-              <p class="tip">A <b>scale is a contiguous arc</b>: pick major/minor and watch 7 adjacent notes light up. Pentatonics are a shorter arc; whole-tone / diminished break into a pattern. The same notes glow on the keyboard. Click a note to hear it and re-centre.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section class="panel mode-panel hidden" id="panel-rhythm">
         <div class="game-bar">
           <select id="song-select"></select>
@@ -225,8 +182,6 @@
   <script src="js/keyboard.js"></script>
   <script src="js/songs.js"></script>
   <script src="js/games.js"></script>
-  <script src="js/tutorial.js"></script>
-  <script src="js/circle.js"></script>
   <script src="js/main.js"></script>
   <!-- recorded piano samples (~2.7 MB base64) — loaded last so the app is
        interactive immediately; the audio engine polls for it in the background -->

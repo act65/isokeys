@@ -28,10 +28,9 @@
   // ---- build the keyboard ----
   const kbd = new KB.HexKeyboard($('kbd-canvas'), effectiveLayout());
 
-  // ---- games + tutorial ----
+  // ---- games ----
   const rhythm = new KB.RhythmGame(kbd, $('rhythm-canvas'), renderRhythmScore);
   const reaction = new KB.ReactionGame(kbd, renderReactionState);
-  const tutorial = new KB.LayoutTutorial(kbd, renderTutorial);
 
   // ---- populate selects ----
   const presetSel = $('layout-preset');
@@ -49,7 +48,7 @@
     songSel.appendChild(opt);
   });
 
-  // note-name dropdowns (scale root + tutorial root)
+  // note-name dropdown for the scale-highlight colour scheme
   function fillNoteNames(sel) {
     T.NOTE_NAMES.forEach((n, pc) => {
       const opt = document.createElement('option');
@@ -58,7 +57,6 @@
     });
   }
   fillNoteNames($('scale-root'));
-  fillNoteNames($('tut-root'));
 
   // each scale is its own entry in the colour-scheme dropdown
   const scaleGroup = document.createElement('optgroup');
@@ -70,28 +68,11 @@
   });
   $('color-scheme').appendChild(scaleGroup);
 
-  // tutorial chord-type dropdown
-  Object.entries(T.CHORD_TYPES).forEach(([key, def]) => {
-    const opt = document.createElement('option');
-    opt.value = key; opt.textContent = def.label;
-    $('tut-type').appendChild(opt);
-  });
-  function refreshInvOptions() {
-    const inv = $('tut-inv');
-    inv.innerHTML = '';
-    for (let i = 0; i < tutorial.numInversions(); i++) {
-      const opt = document.createElement('option');
-      opt.value = i; opt.textContent = T.INVERSION_NAMES[i];
-      inv.appendChild(opt);
-    }
-  }
-
   // ---- theme + colour scheme ----
   document.body.dataset.theme = 'earthy';
   $('theme-select').addEventListener('change', (e) => {
     document.body.dataset.theme = e.target.value;
     kbd.setTheme(e.target.value);
-    circle.setTheme(e.target.value);
   });
   $('color-scheme').addEventListener('change', (e) => {
     const v = e.target.value;
@@ -120,11 +101,6 @@
       `↗ ${intervalName(ur)}<br>` +
       `↖ ${intervalName(ur - r)}`;
     stopGames();
-    // keep the tutorial highlight in sync when the layout changes underneath it
-    if (!$('panel-tutorial').classList.contains('hidden')) {
-      const activeBtn = document.querySelector('.subtab.active');
-      if (activeBtn) selectSubtab(activeBtn.dataset.view);
-    }
   }
 
   presetSel.addEventListener('change', () => {
@@ -149,7 +125,7 @@
 
   // ---- mode switching ----
   const panels = {
-    free: $('panel-free'), tutorial: $('panel-tutorial'),
+    free: $('panel-free'),
     rhythm: $('panel-rhythm'), reaction: $('panel-reaction'),
   };
   document.querySelectorAll('.tab').forEach((tab) => {
@@ -159,99 +135,15 @@
       const mode = tab.dataset.mode;
       Object.entries(panels).forEach(([m, el]) => el.classList.toggle('hidden', m !== mode));
       stopGames();
-      if (mode === 'tutorial') {
-        refreshInvOptions();
-        const activeBtn = document.querySelector('.subtab.active');
-        selectSubtab(activeBtn ? activeBtn.dataset.view : 'neighbours');
-      }
     });
   });
 
   function stopGames() {
     rhythm.stop();
     reaction.stop();
-    tutorial.leave();
     kbd.clearHighlights();
     $('rhythm-feedback').textContent = '';
   }
-
-  // ---- circle of fifths ----
-  fillNoteNames($('circle-root'));
-  Object.keys(T.SCALES).forEach((key) => {
-    const opt = document.createElement('option');
-    opt.value = key; opt.textContent = T.SCALE_LABELS[key] || key;
-    $('circle-scale').appendChild(opt);
-  });
-  let circleRoot = 0, circleScale = 'major';
-  const circle = new KB.CircleOfFifths($('circle-canvas'), (pc) => {
-    circleRoot = pc;
-    $('circle-root').value = String(pc);
-    KB.audio.blip(60 + pc, 0.7);
-    updateCircle();
-  });
-  function updateCircle() {
-    circle.setTheme(document.body.dataset.theme);
-    circle.setSelection(circleRoot, circleScale);
-    const set = T.SCALES[circleScale] || T.SCALES.major;
-    const hl = new Map();
-    kbd.cells.forEach((c) => {
-      const n = kbd.noteFor(c.key);
-      if (n < 0 || n > 127) return;
-      const pc = ((n % 12) + 12) % 12;
-      const deg = set.indexOf((((pc - circleRoot) % 12) + 12) % 12);
-      if (deg === -1) return;
-      const frac = set.length > 1 ? deg / (set.length - 1) : 0;
-      const col = KB.viridis(0.1 + frac * 0.85);
-      hl.set(c.key, {
-        color: `rgb(${col[0] | 0}, ${col[1] | 0}, ${col[2] | 0})`,
-        ring: pc === circleRoot ? '#ffffff' : 'rgba(255,255,255,0.5)',
-      });
-    });
-    kbd.setHighlights(hl);
-  }
-  $('circle-root').addEventListener('change', (e) => { circleRoot = parseInt(e.target.value, 10); updateCircle(); });
-  $('circle-scale').addEventListener('change', (e) => { circleScale = e.target.value; updateCircle(); });
-
-  // ---- tutorial sub-view routing ----
-  function selectSubtab(view) {
-    document.querySelectorAll('.subtab').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
-    $('tut-neighbours').classList.toggle('hidden', view !== 'neighbours');
-    $('tut-chords').classList.toggle('hidden', view !== 'chords');
-    $('tut-circle').classList.toggle('hidden', view !== 'circle');
-    if (view === 'circle') { tutorial.active = false; updateCircle(); }
-    else { tutorial.active = true; tutorial.setView(view); }
-  }
-  document.querySelectorAll('.subtab').forEach((btn) => btn.addEventListener('click', () => selectSubtab(btn.dataset.view)));
-
-  // ---- tutorial controls ----
-  $('tut-root').addEventListener('change', (e) => tutorial.setRoot(parseInt(e.target.value, 10)));
-  $('tut-type').addEventListener('change', (e) => { tutorial.setType(e.target.value); refreshInvOptions(); $('tut-inv').value = '0'; });
-  $('tut-inv').addEventListener('change', (e) => tutorial.setInversion(parseInt(e.target.value, 10)));
-  $('tut-play').addEventListener('click', () => { KB.audio.ensure(); tutorial.play(); });
-  $('tut-play-n').addEventListener('click', () => { KB.audio.ensure(); tutorial.play(); });
-
-  function ivQuality(semis) {
-    const a = Math.abs(semis);
-    return a <= 12 ? IV_NAMES[a] : a + ' st';
-  }
-  function renderTutorial(st) {
-    if (st.view === 'neighbours') {
-      $('tut-center').textContent = st.center;
-      $('tut-neighbour-list').innerHTML = st.neighbours.map((n) =>
-        `<div class="nb-item ${n.delta >= 0 ? 'up' : 'down'}">
-           <span class="nb-arrow">${n.arrow}</span>
-           <b>${n.delta >= 0 ? '+' : ''}${n.delta}</b>
-           <em>${ivQuality(n.delta)}</em>
-         </div>`
-      ).join('');
-    } else {
-      $('tut-notes').innerHTML = st.items.map((it) =>
-        `<div class="tut-note"><b>${it.role}</b><span>${it.name}</span><em>${keyCap(it.key)}</em></div>`
-      ).join('<span class="tut-arrow">+</span>');
-      $('tut-desc').textContent = `${st.root} ${st.typeLabel} · ${st.inversion} — ${st.desc}`;
-    }
-  }
-  function keyCap(k) { return k === '—' ? '—' : (T.keyLabel(k)); }
 
   // ---- rhythm game ----
   $('rhythm-speed').addEventListener('change', (e) => rhythm.setSpeed(parseFloat(e.target.value)));
@@ -353,15 +245,11 @@
   renderRhythmScore({ score: 0, combo: 0, perfect: 0, great: 0, good: 0, miss: 0 });
   renderReactionState({ round: 0, best: null, avg: null, wrong: 0 });
 
-  // deep-link to a mode or tutorial sub-view via #hash (e.g. #reaction, #circle)
+  // deep-link to a mode via #hash (e.g. index.html#reaction)
   const hash = (location.hash || '').replace('#', '');
-  if (['tutorial', 'rhythm', 'reaction', 'free'].indexOf(hash) !== -1) {
+  if (['rhythm', 'reaction', 'free'].indexOf(hash) !== -1) {
     const tab = document.querySelector(`.tab[data-mode="${hash}"]`);
     if (tab) tab.click();
-  } else if (['neighbours', 'chords', 'circle'].indexOf(hash) !== -1) {
-    const tab = document.querySelector('.tab[data-mode="tutorial"]');
-    if (tab) tab.click();
-    selectSubtab(hash);
   }
 
   // ---- loading screen: start decoding samples up front, show progress ----
