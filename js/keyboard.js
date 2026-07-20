@@ -173,13 +173,18 @@
     /* ---- input ---- */
     _bindInput() {
       window.addEventListener('keydown', (e) => {
-        if (e.repeat) return;
         if (e.metaKey || e.ctrlKey || e.altKey) return;
+        const ae = document.activeElement;
+        // don't hijack typing into a number/text field
+        if (ae && ae.tagName === 'INPUT') return;
         const key = this._normKey(e);
-        if (this.byKey[key]) {
-          e.preventDefault();
-          this.press(key);
-        }
+        if (!this.byKey[key]) return;
+        // Always preventDefault (incl. key-repeat): otherwise a focused control's
+        // type-ahead fires — e.g. the layout <select> jumps to another preset.
+        e.preventDefault();
+        if (ae && (ae.tagName === 'SELECT' || ae.tagName === 'BUTTON')) ae.blur();
+        if (e.repeat) return;
+        this.press(key);
       });
       window.addEventListener('keyup', (e) => {
         const key = this._normKey(e);
